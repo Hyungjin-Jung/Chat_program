@@ -12,7 +12,7 @@ int circle2()
 {
 	cout << "1 + 1 = 3";
 	cout << "1 + 1 = 2";
-	cout << "2 + 3 = 5";
+	cout << "2 + 4 = 6";
 }
 
 int main()
