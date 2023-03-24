@@ -1,8 +1,18 @@
 #include <iostream>
 
+
 double circle(int r, float pi)
 {
 	return (double)r * (double)r * pi;
+}
+
+using namespace std;
+
+int circle2()
+{
+	cout << "1 + 1 = 3";
+	cout << "1 + 1 = 2";
+	cout << "2 + 3 = 5";
 }
 
 int main()
@@ -10,9 +20,9 @@ int main()
 	int r;
 	double pi = 3.141592;
 	
-	std::cout << "¹ÝÁö¸§ ÀÔ·Â: ";
+	std::cout << "ï¿½ï¿½ï¿½ï¿½ ï¿½Ô·ï¿½: ";
 	std::cin >> r;
-	std::cout << "¿øÀÇ ³ÐÀÌ´Â " << circle(r, pi) << std::endl;
+	std::cout << "ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ì´ï¿½ " << circle(r, pi) << std::endl;
 }
 
 int num() {}
