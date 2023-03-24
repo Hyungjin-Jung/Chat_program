@@ -20,7 +20,13 @@ int main()
 	int r;
 	double pi = 3.141592;
 	
+<<<<<<< HEAD
 	std::cout << "Radius: ";
 	std::cin >> r;
 	std::cout << "Area: " << circle(r, pi) << std::endl;
+=======
+	std::cout << "���� �Է�: ";
+	std::cin >> r;
+	std::cout << "���� ���̴� " << circle(r, pi) << std::endl;
+>>>>>>> 7d14839f8d6b5892aa5e45a7cb135f79171c9992
 }
