@@ -14,3 +14,5 @@ int main()
 	std::cin >> r;
 	std::cout << "¿øÀÇ ³ĞÀÌ´Â " << circle(r, pi) << std::endl;
 }
+
+int num() {}
