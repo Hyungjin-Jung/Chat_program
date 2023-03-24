@@ -24,5 +24,3 @@ int main()
 	std::cin >> r;
 	std::cout << "���� ���̴� " << circle(r, pi) << std::endl;
 }
-
-int num() {}
