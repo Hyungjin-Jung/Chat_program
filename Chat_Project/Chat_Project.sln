@@ -13,6 +13,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "client3", "client3\client3.
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "client4", "client4\client4.vcxproj", "{DFDA1018-0304-4AEB-B222-E7F9B4607BB2}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MySQL", "MySQL\MySQL.vcxproj", "{D853EFDC-5B70-43B7-B5BB-51134F48D4D0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -61,6 +63,14 @@ Global
 		{DFDA1018-0304-4AEB-B222-E7F9B4607BB2}.Release|x64.Build.0 = Release|x64
 		{DFDA1018-0304-4AEB-B222-E7F9B4607BB2}.Release|x86.ActiveCfg = Release|Win32
 		{DFDA1018-0304-4AEB-B222-E7F9B4607BB2}.Release|x86.Build.0 = Release|Win32
+		{D853EFDC-5B70-43B7-B5BB-51134F48D4D0}.Debug|x64.ActiveCfg = Debug|x64
+		{D853EFDC-5B70-43B7-B5BB-51134F48D4D0}.Debug|x64.Build.0 = Debug|x64
+		{D853EFDC-5B70-43B7-B5BB-51134F48D4D0}.Debug|x86.ActiveCfg = Debug|Win32
+		{D853EFDC-5B70-43B7-B5BB-51134F48D4D0}.Debug|x86.Build.0 = Debug|Win32
+		{D853EFDC-5B70-43B7-B5BB-51134F48D4D0}.Release|x64.ActiveCfg = Release|x64
+		{D853EFDC-5B70-43B7-B5BB-51134F48D4D0}.Release|x64.Build.0 = Release|x64
+		{D853EFDC-5B70-43B7-B5BB-51134F48D4D0}.Release|x86.ActiveCfg = Release|Win32
+		{D853EFDC-5B70-43B7-B5BB-51134F48D4D0}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
