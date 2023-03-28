@@ -3,6 +3,7 @@
 #include "mysql_connection.h"
 #include <cppconn/driver.h>
 #include <cppconn/exception.h>
+#include <cppconn/statement.h> // 추가!!
 #include <cppconn/prepared_statement.h>
 using namespace std;
 // for demonstration only. never save your password in the code!
@@ -14,7 +15,7 @@ int main()
 	// MySQL Connector/C++ 초기화
 	sql::Driver* driver; // 추후 해제하지 않아도 Connector/C++가 자동으로 해제해 줌
 	sql::Connection* con;
-	sql::Statement* stmt;
+	sql::Statement* stmt; // 추가!!
 	sql::PreparedStatement* pstmt;
 	try
 	{
@@ -23,12 +24,16 @@ int main()
 	}
 	catch (sql::SQLException e)
 	{
-			cout << "Could not connect to server. Error message: " << e.what() << endl;
+		cout << "Could not connect to server. Error message: " << e.what() << endl;
 		system("pause");
 		exit(1);
 	}
 	// please create database "cpp_db" ahead of time
 	con->setSchema("cpp_db");
+	// connector에서 한글 출력을 위한 셋팅
+	stmt = con->createStatement(); // 추가!!
+	stmt->execute("set names euckr"); // 추가!!
+	if (stmt) { delete stmt; stmt = nullptr; } // 추가!!
 	// 데이터베이스 쿼리 실행
 	stmt = con->createStatement();
 	stmt->execute("DROP TABLE IF EXISTS inventory");
@@ -41,7 +46,7 @@ int main()
 	pstmt->setInt(2, 150);
 	pstmt->execute();
 	cout << "One row inserted." << endl;
-	pstmt->setString(1, "orange");
+	pstmt->setString(1, "오렌지"); // 한글 데이터 입력
 	pstmt->setInt(2, 154);
 	pstmt->execute();
 	cout << "One row inserted." << endl;
