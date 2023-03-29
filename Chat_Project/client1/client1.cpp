@@ -10,7 +10,7 @@
 #include "mysql_connection.h"
 #include <cppconn/driver.h>
 #include <cppconn/exception.h>
-#include <cppconn/statement.h> // Ãß°¡!!
+#include <cppconn/statement.h> // ì¶”ê°€!!
 #include <cppconn/prepared_statement.h>
 #include <cppconn/resultset.h>
 
@@ -26,10 +26,10 @@ SOCKET client_sock;
 string my_nick = "";
 string password = "";
 string phonenum = "";
-const string username = "user"; // µ¥ÀÌÅÍº£ÀÌ½º »ç¿ëÀÚ
-const string password1 = "1234"; // µ¥ÀÌÅÍº£ÀÌ½º Á¢¼Ó ºñ¹Ð¹øÈ£
+const string username = "user"; // ë°ì´í„°ë² ì´ìŠ¤ ì‚¬ìš©ìž
+const string password1 = "1234"; // ë°ì´í„°ë² ì´ìŠ¤ ì ‘ì† ë¹„ë°€ë²ˆí˜¸
 
-const string server = "tcp://127.0.0.1:3306"; // µ¥ÀÌÅÍº£ÀÌ½º ÁÖ¼Ò
+const string server = "tcp://127.0.0.1:3306"; // ë°ì´í„°ë² ì´ìŠ¤ ì£¼ì†Œ
 
 int chat_recv()
 {
@@ -38,15 +38,15 @@ int chat_recv()
 	while (1)
 	{
 		ZeroMemory(&buf, MAX_SIZE);
-		if (recv(client_sock, buf, MAX_SIZE, 0) > 0)	// 0 ÀÏ ¶§ Á¤»ó Á¾·á, 0º¸´Ù Å©¸é Á¤»óÀûÀ¸·Î ¹ÞÀ½
+		if (recv(client_sock, buf, MAX_SIZE, 0) > 0)	// 0 ì¼ ë•Œ ì •ìƒ ì¢…ë£Œ, 0ë³´ë‹¤ í¬ë©´ ì •ìƒì ìœ¼ë¡œ ë°›ìŒ
 		{
 			msg = buf;
 			string user;
-			std::stringstream ss(msg);	// ¹®ÀÚ¿­À» °ø¹é°ú '\n'À» ±âÁØÀ¸·Î ¿©·¯ °³ÀÇ ´Ù¸¥ Çü½ÄÀ¸·Î Â÷·Ê´ë·Î ºÐ¸®
+			std::stringstream ss(msg);	// ë¬¸ìžì—´ì„ ê³µë°±ê³¼ '\n'ì„ ê¸°ì¤€ìœ¼ë¡œ ì—¬ëŸ¬ ê°œì˜ ë‹¤ë¥¸ í˜•ì‹ìœ¼ë¡œ ì°¨ë¡€ëŒ€ë¡œ ë¶„ë¦¬
 			ss >> user;
 
 			if (user != my_nick)
-				cout << buf << endl;	// Ã¤ÆÃ°ú À¯Àú ÀÌ¸§ÀÌ µé¾î ÀÖÀ½
+				cout << buf << endl;	// ì±„íŒ…ê³¼ ìœ ì € ì´ë¦„ì´ ë“¤ì–´ ìžˆìŒ
 		}
 		else
 		{
@@ -56,21 +56,21 @@ int chat_recv()
 	}
 }
 
-void sign_in()		// ·Î±×ÀÎ
+void sign_in()		// ë¡œê·¸ì¸
 {
 
 }
 
 int main()
 {
-	// MySQL Connector/C++ ÃÊ±âÈ­
-	sql::Driver* driver; // ÃßÈÄ ÇØÁ¦ÇÏÁö ¾Ê¾Æµµ Connector/C++°¡ ÀÚµ¿À¸·Î ÇØÁ¦ÇØ ÁÜ
+	// MySQL Connector/C++ ì´ˆê¸°í™”
+	sql::Driver* driver; // ì¶”í›„ í•´ì œí•˜ì§€ ì•Šì•„ë„ Connector/C++ê°€ ìžë™ìœ¼ë¡œ í•´ì œí•´ ì¤Œ
 	sql::Connection* con;
-	sql::Statement* stmt; // Ãß°¡!!
+	sql::Statement* stmt; // ì¶”ê°€!!
 	sql::PreparedStatement* pstmt;
 	sql::ResultSet* result;
 
-	string pw_check = "";
+	string pw_check= "";
 
 	WSADATA wsa;
 	int code = WSAStartup(MAKEWORD(2, 2), &wsa);
@@ -86,12 +86,12 @@ int main()
 		system("pause");
 		exit(1);
 	}
-
-	con->setSchema("ceemychat");	// ceemychatÀÌ¶ó´Â ½ºÅ°¸¶ ½ÇÇà
-	stmt = con->createStatement(); // Ãß°¡!!
-	stmt->execute("set names euckr"); // Ãß°¡!!
-	if (stmt) { delete stmt; stmt = nullptr; } // Ãß°¡!!
-	// µ¥ÀÌÅÍº£ÀÌ½º Äõ¸® ½ÇÇà
+	
+	con->setSchema("ceemychat");	// ceemychatì´ë¼ëŠ” ìŠ¤í‚¤ë§ˆ ì‹¤í–‰
+	stmt = con->createStatement(); // ì¶”ê°€!!
+	stmt->execute("set names euckr"); // ì¶”ê°€!!
+	if (stmt) { delete stmt; stmt = nullptr; } // ì¶”ê°€!!
+	// ë°ì´í„°ë² ì´ìŠ¤ ì¿¼ë¦¬ ì‹¤í–‰
 	/*
 	stmt->execute("DROP TABLE IF EXISTS user");
 	stmt->execute("DROP TABLE IF EXISTS chatingroom");
@@ -105,7 +105,7 @@ int main()
 	cout << "Finished creating table" << endl;
 	*/
 	delete stmt;
-
+	
 
 	if (!code)
 	{
@@ -118,7 +118,7 @@ int main()
 			my_nick = "";
 			phonenum = "";
 
-			cout << "1. ·Î±×ÀÎ  2. È¸¿ø°¡ÀÔ  3. ºñ¹Ð¹øÈ£ Ã£±â : ";
+			cout << "1. ë¡œê·¸ì¸  2. íšŒì›ê°€ìž…  3. ë¹„ë°€ë²ˆí˜¸ ì°¾ê¸° : ";
 			cin >> num;
 
 			switch (num)
@@ -126,10 +126,10 @@ int main()
 			case '1':
 			{
 				pstmt = con->prepareStatement("SELECT * FROM user;");
-				cout << "¾ÆÀÌµð ÀÔ·Â >> ";
+				cout << "ì•„ì´ë”” ìž…ë ¥ >> ";
 				cin >> my_nick;
 
-				cout << "ÆÐ½º¿öµå ÀÔ·Â >> ";
+				cout << "íŒ¨ìŠ¤ì›Œë“œ ìž…ë ¥ >> ";
 				cin >> password;
 
 				result = pstmt->executeQuery();
@@ -143,12 +143,12 @@ int main()
 				}
 				if (confirm == 0)
 				{
-					cout << "·Î±×ÀÎ ¼º°ø!! \n";
+					cout << "ë¡œê·¸ì¸ ì„±ê³µ!! \n";
 					break;
 				}
 				else if (confirm == 1)
 				{
-					cout << "¾ÆÀÌµð ¶Ç´Â ºñ¹Ð¹øÈ£°¡ ÀÏÄ¡ÇÏÁö ¾Ê½À´Ï´Ù!\n";
+					cout << "ì•„ì´ë”” ë˜ëŠ” ë¹„ë°€ë²ˆí˜¸ê°€ ì¼ì¹˜í•˜ì§€ ì•ŠìŠµë‹ˆë‹¤!\n";
 				}
 				delete result;
 				//pstmt->execute();
@@ -162,14 +162,14 @@ int main()
 				while (my_nick == "")
 				{
 					result = pstmt->executeQuery();
-					cout << "»ç¿ëÇÒ ¾ÆÀÌµð ÀÔ·Â >> ";
+					cout << "ì‚¬ìš©í•  ì•„ì´ë”” ìž…ë ¥ >> ";
 					cin >> my_nick;
 					//cout << result->getString("id") << " ";
 					while (result->next())
 					{
 						if (result->getString("id") == my_nick)
 						{
-							cout << "¾ÆÀÌµð°¡ Áßº¹µË´Ï´Ù!\n ´Ù½Ã ÀÔ·ÂÇØÁÖ¼¼¿ä. \n";
+							cout << "ì•„ì´ë””ê°€ ì¤‘ë³µë©ë‹ˆë‹¤!\n ë‹¤ì‹œ ìž…ë ¥í•´ì£¼ì„¸ìš”. \n";
 							my_nick = "";
 						}
 					}
@@ -181,15 +181,15 @@ int main()
 				{
 					while (1)
 					{
-						cout << "»ç¿ëÇÒ ºñ¹Ð¹øÈ£ ÀÔ·Â >> ";
+						cout << "ì‚¬ìš©í•  ë¹„ë°€ë²ˆí˜¸ ìž…ë ¥ >> ";
 						cin >> password;
-						cout << "ºñ¹Ð¹øÈ£ È®ÀÎ: ";
+						cout << "ë¹„ë°€ë²ˆí˜¸ í™•ì¸: ";
 						cin >> pw_check;
 						if (pw_check == password)
 							break;
 						else
 						{
-							cout << "ºñ¹Ð¹øÈ£°¡ ÀÏÄ¡ÇÏÁö ¾Ê½À´Ï´Ù. \n ´Ù½Ã Ã³À½ºÎÅÍ ÀÔ·ÂÇØÁÖ¼¼¿ä. \n";
+							cout << "ë¹„ë°€ë²ˆí˜¸ê°€ ì¼ì¹˜í•˜ì§€ ì•ŠìŠµë‹ˆë‹¤. \n ë‹¤ì‹œ ì²˜ìŒë¶€í„° ìž…ë ¥í•´ì£¼ì„¸ìš”. \n";
 						}
 					}
 
@@ -200,14 +200,14 @@ int main()
 				while (phonenum == "")
 				{
 					result = pstmt->executeQuery();
-					cout << "ÀüÈ­¹øÈ£ ÀÔ·Â >> ";
+					cout << "ì „í™”ë²ˆí˜¸ ìž…ë ¥ >> ";
 					cin >> phonenum;
 
 					while (result->next())
 					{
 						if (result->getString("phonenum") == phonenum)
 						{
-							cout << "Áßº¹ È¸¿ø°¡ÀÔÀº ºÒ°¡´ÉÇÕ´Ï´Ù!\n";
+							cout << "ì¤‘ë³µ íšŒì›ê°€ìž…ì€ ë¶ˆê°€ëŠ¥í•©ë‹ˆë‹¤!\n";
 							phonenum = "";
 						}
 					}
@@ -216,9 +216,9 @@ int main()
 				result = pstmt->executeQuery();
 
 				pstmt = con->prepareStatement("INSERT INTO user(id, pw, phonenum) VALUES(?,?,?)");
-				pstmt->setString(1, my_nick); // ¾ÆÀÌµð
-				pstmt->setString(2, password); // ºñ¹Ð¹øÈ£
-				pstmt->setString(3, phonenum); // ÀüÈ­¹øÈ£
+				pstmt->setString(1, my_nick); // ì•„ì´ë””
+				pstmt->setString(2, password); // ë¹„ë°€ë²ˆí˜¸
+				pstmt->setString(3, phonenum); // ì „í™”ë²ˆí˜¸
 				pstmt->execute();
 				delete pstmt;
 
@@ -229,9 +229,9 @@ int main()
 			{
 				int error = 1;
 
-				cout << "¾ÆÀÌµð¸¦ ÀÔ·ÂÇØÁÖ¼¼¿ä. \n";
+				cout << "ì•„ì´ë””ë¥¼ ìž…ë ¥í•´ì£¼ì„¸ìš”. \n";
 				cin >> my_nick;
-				cout << "ÀüÈ­¹øÈ£¸¦ ÀÔ·ÂÇØÁÖ¼¼¿ä. \n";
+				cout << "ì „í™”ë²ˆí˜¸ë¥¼ ìž…ë ¥í•´ì£¼ì„¸ìš”. \n";
 				cin >> phonenum;
 
 				pstmt = con->prepareStatement("SELECT * FROM user;");
@@ -241,21 +241,21 @@ int main()
 				{
 					if (my_nick == result->getString("id") && phonenum == result->getString("phonenum"))
 					{
-						cout << "\n¾ÆÀÌµð: " << result->getString(1) << "  ºñ¹Ð¹øÈ£: " << result->getString(2).c_str() << "  ÀüÈ­¹øÈ£: " << result->getString(3) << endl << endl;
+						cout << "\nì•„ì´ë””: " << result->getString(1) << "  ë¹„ë°€ë²ˆí˜¸: " << result->getString(2).c_str() << "  ì „í™”ë²ˆí˜¸: " << result->getString(3) << endl << endl;
 						error = 0;
 						break;
 					}
 				}
 				if (error == 1)
 				{
-					cout << "\n¾ÆÀÌµð ¶Ç´Â ÀüÈ­¹øÈ£¸¦ Àß¸ø ÀÔ·ÂÇÏ¼Ì½À´Ï´Ù. \n\n";
+					cout << "\nì•„ì´ë”” ë˜ëŠ” ì „í™”ë²ˆí˜¸ë¥¼ ìž˜ëª» ìž…ë ¥í•˜ì…¨ìŠµë‹ˆë‹¤. \n\n";
 				}
 				break;
 			}
 
 			default:
 			{
-				cout << "Àß¸ø ÀÔ·ÂÇÏ¼Ì½À´Ï´Ù. \n\n";
+				cout << "ìž˜ëª» ìž…ë ¥í•˜ì…¨ìŠµë‹ˆë‹¤. \n\n";
 			}
 			}
 			num = 0;
@@ -270,7 +270,7 @@ int main()
 
 		while (1)
 		{
-			if (!connect(client_sock, (SOCKADDR*)&client_addr, sizeof(client_addr)))	// connect´Â Á¤»ó ¿¬°áµÇ¸é 0À» ¹ÝÈ¯
+			if (!connect(client_sock, (SOCKADDR*)&client_addr, sizeof(client_addr)))	// connectëŠ” ì •ìƒ ì—°ê²°ë˜ë©´ 0ì„ ë°˜í™˜
 			{
 				cout << "Server Connect" << endl;
 				send(client_sock, my_nick.c_str(), my_nick.length(), 0);
