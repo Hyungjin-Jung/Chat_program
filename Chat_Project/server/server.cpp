@@ -5,6 +5,15 @@
 #include <vector>
 #include <thread>
 #include <WinSock2.h>
+#include <WS2tcpip.h>
+#include <sstream>
+#include <stdlib.h>
+#include "mysql_connection.h"
+#include <cppconn/driver.h>
+#include <cppconn/exception.h>
+#include <cppconn/statement.h> // 추가!!
+#include <cppconn/prepared_statement.h>
+#include <cppconn/resultset.h>
 
 #define MAX_SIZE 1024
 #define MAX_CLIENT 10
@@ -13,6 +22,15 @@ using std::cout;
 using std::cin;
 using std::endl;
 using std::string;
+
+SOCKET client_sock;
+string my_nick = "";
+string password = "";
+string phonenum = "";
+const string username = "user"; // 데이터베이스 사용자
+const string password1 = "1234"; // 데이터베이스 접속 비밀번호
+
+const string server = "tcp://127.0.0.1:3306"; // 데이터베이스 주소
 
 struct SOCKET_INFO
 {
@@ -189,15 +207,49 @@ void recv_msg(int idx)
 {
 	char buf[MAX_SIZE] = {};
 	string msg = "";
+
 	while (1)
 	{
 		ZeroMemory(&buf, MAX_SIZE);
 		if (recv(sck_list[idx].sck, buf, MAX_SIZE, 0) > 0)
 		{
+			sql::Driver* driver; // 추후 해제하지 않아도 Connector/C++가 자동으로 해제해 줌
+			sql::Connection* con;
+			sql::Statement* stmt; // 추가!!
+			sql::PreparedStatement* pstmt;
+			sql::ResultSet* result;
+
+			try
+			{
+				driver = get_driver_instance();
+				con = driver->connect(server, username, password1);
+			}
+			catch (sql::SQLException e)
+			{
+				cout << "Could not connect to server. Error message: " << e.what() << endl;
+				system("pause");
+				exit(1);
+			}
+
+			con->setSchema("ceemychat");	// ceemychat이라는 스키마 실행
+			stmt = con->createStatement(); // 추가!!
+			stmt->execute("set names euckr"); // 추가!!
+			if (stmt) { delete stmt; stmt = nullptr; } // 추가!!
+			delete stmt;
+
+			pstmt = con->prepareStatement("INSERT INTO message(sender_id, receiver_id, text) VALUES(?,?,?)");
+
 			// 만약 정상적으로 받았다면
 			msg = sck_list[idx].user + " : " + buf;
 			cout << msg << endl;
 			send_msg(msg.c_str());
+
+			pstmt->setString(1, sck_list[idx].user); // sender_id
+			pstmt->setString(2, ""); // receiver_id
+			pstmt->setString(3, buf); // text
+			pstmt->execute();
+
+			delete pstmt;
 		}
 		else
 		{

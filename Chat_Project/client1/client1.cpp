@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <string>
+#include <vector>
 #include <thread>
 #include <WinSock2.h>
 #include <WS2tcpip.h>
@@ -31,268 +32,239 @@ const string password1 = "1234"; // 데이터베이스 접속 비밀번호
 
 const string server = "tcp://127.0.0.1:3306"; // 데이터베이스 주소
 
-int chat_recv()
+struct SOCKET_INFO
 {
-	char buf[MAX_SIZE] = {};
-	string msg;
-	while (1)
-	{
-		ZeroMemory(&buf, MAX_SIZE);
-		if (recv(client_sock, buf, MAX_SIZE, 0) > 0)	// 0 일 때 정상 종료, 0보다 크면 정상적으로 받음
-		{
-			msg = buf;
-			string user;
-			std::stringstream ss(msg);	// 문자열을 공백과 '\n'을 기준으로 여러 개의 다른 형식으로 차례대로 분리
-			ss >> user;
+	SOCKET sck;
+	string user;
+};
 
-			if (user != my_nick)
-				cout << buf << endl;	// 채팅과 유저 이름이 들어 있음
-		}
-		else
-		{
-			cout << "Server OFF!!" << endl;
-			return -1;
-		}
-	}
-}
+std::vector<SOCKET_INFO> sck_list;
+SOCKET_INFO server_sock;
+int client_count = 0;
 
-void sign_in()		// 로그인
-{
+// 1. 소켓 초기화
+// socket(), bind(), listen()
+// 소켓을 생성하고, 주소를 묶어주고, 활성화 -> 대기상태
+void server_init();
 
-}
+// 2. 클라이언트 추가
+// accept(), recv()
+// 연결을 설정하고 클라이언트가 전송한 닉네임을 받음
+void add_client();
+
+// 3. 클라이언트에게 msg 보내기
+// send()
+void send_msg(const char* msg);
+
+// 4. 클라이언트에게 채팅 내용을 받음
+// 퇴장했다면 (0을 반환) "퇴장했습니다." 공지 띄워줌
+void recv_msg(int idx);
+
+// 5. 소켓 달아줌
+void del_client(int idx);
+
 
 int main()
 {
-	// MySQL Connector/C++ 초기화
-	sql::Driver* driver; // 추후 해제하지 않아도 Connector/C++가 자동으로 해제해 줌
-	sql::Connection* con;
-	sql::Statement* stmt; // 추가!!
-	sql::PreparedStatement* pstmt;
-	sql::ResultSet* result;
-
-	string pw_check= "";
-
 	WSADATA wsa;
+
 	int code = WSAStartup(MAKEWORD(2, 2), &wsa);
+	// winsock version 2.2 사용
+	// winsock 초기화하는 함수
+	// 실행 성공하면 0 반환, 실패하면 0 이외의 값 반환
 
-	try
+	if (!code)	// 실행 성공
 	{
-		driver = get_driver_instance();
-		con = driver->connect(server, username, password1);
+		server_init();
+
+		std::thread th1[MAX_CLIENT];
+
+		for (int i = 0; i < MAX_CLIENT; i++)
+		{
+			th1[i] = std::thread(add_client);
+		}
+
+		while (1)
+		{
+			string text, msg = "";
+			std::getline(cin, text); // 띄어쓰기까지 입력
+			const char* buf = text.c_str();
+
+			msg = server_sock.user + ':' + buf;
+
+			send_msg(msg.c_str());
+		}
+
+		for (int i = 0; MAX_CLIENT; i++)
+		{
+			th1[i].join();
+		}
+
+		closesocket(server_sock.sck);
+
+		WSACleanup();
+		return 0;
 	}
-	catch (sql::SQLException e)
-	{
-		cout << "Could not connect to server. Error message: " << e.what() << endl;
-		system("pause");
-		exit(1);
-	}
-	
-	con->setSchema("ceemychat");	// ceemychat이라는 스키마 실행
-	stmt = con->createStatement(); // 추가!!
-	stmt->execute("set names euckr"); // 추가!!
-	if (stmt) { delete stmt; stmt = nullptr; } // 추가!!
-	// 데이터베이스 쿼리 실행
+
+	// return 0;
+}
+
+
+/* 함수 구현부 */
+
+// 1. 소켓 초기화 
+void server_init()
+{
+	server_sock.sck = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);	//IPPROTO_TCP 대신 숫자 6을 써도 가능
 	/*
-	stmt->execute("DROP TABLE IF EXISTS user");
-	stmt->execute("DROP TABLE IF EXISTS chatingroom");
-	stmt->execute("DROP TABLE IF EXISTS message");
-	stmt = con->createStatement();
-	stmt->execute("CREATE TABLE user (id VARCHAR(15) PRIMARY KEY, pw VARCHAR(10) NOT NULL,phonenum STRING NOT NULL);");
-	cout << "Finished creating table" << endl;
-	stmt->execute("CREATE TABLE chatingroom (num INT UNSIGNED PRIMARY KEY, sender_id INT UNSIGNED NOT NULL, receiver_id INT UNSIGNED NOT NULL);");
-	cout << "Finished creating table" << endl;
-	stmt->execute("CREATE TABLE message (id INT UNSIGNED PRIMARY KEY, sender_id INT UNSIGNED NOT NULL, receiver_id INT UNSIGNED NOT NULL, time DATETIME NOT NULL, text VARCHAR(45));");
-	cout << "Finished creating table" << endl;
+	socket(int AF, int 통신타입, int PROTOCOL)
+	- 주소 체계 형식
+	- 통신 타입 설정
+	- 어떤 프로토콜 사용할건지
 	*/
-	delete stmt;
-	
 
-	if (!code)
+	SOCKADDR_IN server_addr = {};
+	server_addr.sin_family = AF_INET;
+	server_addr.sin_port = htons(7777);	// htons() : 2바이트 이상의 변수에 대해 바이트 순서 체계를 바꿔주는것(short)
+	server_addr.sin_addr.s_addr = htonl(INADDR_ANY);	// INADDR_ANY : localhost 를 의미, localhost = 127.0.0.1
+
+	bind(server_sock.sck, (sockaddr*)&server_addr, sizeof(server_addr));
+	/*
+	bind(SOCKET s, const sockaddr *name, int namelen);
+	- socket()으로 만들어준 소켓
+	- 소켓과 연결할 주소 정보를 담고 있는 구조체
+		(코드에서는 server_addr)
+	- 두번째 매개변수의 크기
+	*/
+
+	listen(server_sock.sck, SOMAXCONN);
+	/*
+	listen(SOCKET s, int backlog);
+	*/
+
+	server_sock.user = "server";
+
+	// 서버가 커지면 나올 문구
+
+	cout << "Server ON!!" << endl;
+}
+
+// 2. 클라이언트 연결 & 추가
+void add_client()
+{
+	SOCKADDR_IN addr = {};
+	int addrsize = sizeof(addr);
+	char buf[MAX_SIZE] = {};
+
+	ZeroMemory(&addr, addrsize);	// addr 0으로 초기화
+
+
+	SOCKET_INFO new_client = {};
+
+	new_client.sck = accept(server_sock.sck, (sockaddr*)&addr, &addrsize);
+	/*
+	SOCKET accept(SOCKET s, sockaddr *addr, &addrsize;
+	- socket()으로 만들어준 소켓
+	- client의 주소 정보를 저장할 구조체
+	- 2번 매개변수의 크기
+	*/
+
+	recv(new_client.sck, buf, MAX_SIZE, 0);
+	/*
+	recv(SOCKET s, const char * buf, int len, int flags)
+	- accept()으로 만들어준 소켓 (통신을 위한 소켓)
+	- 데이터를 받을 변수
+	- 두번쪠 매개변수의 길이
+	- flag
+	*/
+
+	new_client.user = string(buf);
+	// buf를 string으로 변환해서 담아줌
+
+	string msg = "[공지]" + new_client.user + "님이 입장했습니다. ";
+	cout << msg << endl;
+
+	sck_list.push_back(new_client);
+
+	std::thread th(recv_msg, client_count);
+
+	client_count++;
+	cout << "[공지] 현재 접속자 수: " << client_count << "명" << endl;
+	send_msg(msg.c_str());
+
+	th.join();	// 쓰레드 끝냄
+}
+
+void send_msg(const char* msg)
+{
+	for (int i = 0; i < client_count; i++)
 	{
-		char num;
-		int confirm = 1;
-		string nick_check;
-
-		while (confirm)
-		{
-			my_nick = "";
-			phonenum = "";
-
-			cout << "1. 로그인  2. 회원가입  3. 비밀번호 찾기 : ";
-			cin >> num;
-
-			switch (num)
-			{
-			case '1':
-			{
-				pstmt = con->prepareStatement("SELECT * FROM user;");
-				cout << "아이디 입력 >> ";
-				cin >> my_nick;
-
-				cout << "패스워드 입력 >> ";
-				cin >> password;
-
-				result = pstmt->executeQuery();
-
-				while (result->next())
-				{
-					if (my_nick == result->getString("id") && password == result->getString("pw"))
-					{
-						confirm = 0;
-					}
-				}
-				if (confirm == 0)
-				{
-					cout << "로그인 성공!! \n";
-					break;
-				}
-				else if (confirm == 1)
-				{
-					cout << "아이디 또는 비밀번호가 일치하지 않습니다!\n";
-				}
-				delete result;
-				//pstmt->execute();
-				delete pstmt;
-				break;
-			}
-
-			case '2':
-			{
-				pstmt = con->prepareStatement("SELECT * FROM user;");
-				while (my_nick == "")
-				{
-					result = pstmt->executeQuery();
-					cout << "사용할 아이디 입력 >> ";
-					cin >> my_nick;
-					//cout << result->getString("id") << " ";
-					while (result->next())
-					{
-						if (result->getString("id") == my_nick)
-						{
-							cout << "아이디가 중복됩니다!\n 다시 입력해주세요. \n";
-							my_nick = "";
-						}
-					}
-					delete result;
-				}
-				result = pstmt->executeQuery();
-
-				while (1)
-				{
-					while (1)
-					{
-						cout << "사용할 비밀번호 입력 >> ";
-						cin >> password;
-						cout << "비밀번호 확인: ";
-						cin >> pw_check;
-						if (pw_check == password)
-							break;
-						else
-						{
-							cout << "비밀번호가 일치하지 않습니다. \n 다시 처음부터 입력해주세요. \n";
-						}
-					}
-
-					break;
-				}
-
-				pstmt = con->prepareStatement("SELECT * FROM user;");
-				while (phonenum == "")
-				{
-					result = pstmt->executeQuery();
-					cout << "전화번호 입력 >> ";
-					cin >> phonenum;
-
-					while (result->next())
-					{
-						if (result->getString("phonenum") == phonenum)
-						{
-							cout << "중복 회원가입은 불가능합니다!\n";
-							phonenum = "";
-						}
-					}
-					delete result;
-				}
-				result = pstmt->executeQuery();
-
-				pstmt = con->prepareStatement("INSERT INTO user(id, pw, phonenum) VALUES(?,?,?)");
-				pstmt->setString(1, my_nick); // 아이디
-				pstmt->setString(2, password); // 비밀번호
-				pstmt->setString(3, phonenum); // 전화번호
-				pstmt->execute();
-				delete pstmt;
-
-				break;
-			}
-
-			case '3':
-			{
-				int error = 1;
-
-				cout << "아이디를 입력해주세요. \n";
-				cin >> my_nick;
-				cout << "전화번호를 입력해주세요. \n";
-				cin >> phonenum;
-
-				pstmt = con->prepareStatement("SELECT * FROM user;");
-				result = pstmt->executeQuery();
-
-				while (result->next())
-				{
-					if (my_nick == result->getString("id") && phonenum == result->getString("phonenum"))
-					{
-						cout << "\n아이디: " << result->getString(1) << "  비밀번호: " << result->getString(2).c_str() << "  전화번호: " << result->getString(3) << endl << endl;
-						error = 0;
-						break;
-					}
-				}
-				if (error == 1)
-				{
-					cout << "\n아이디 또는 전화번호를 잘못 입력하셨습니다. \n\n";
-				}
-				break;
-			}
-
-			default:
-			{
-				cout << "잘못 입력하셨습니다. \n\n";
-			}
-			}
-			num = 0;
-		}
-
-
-		client_sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
-		SOCKADDR_IN client_addr = {};
-		client_addr.sin_family = AF_INET;
-		client_addr.sin_port = htons(7777);
-		InetPton(AF_INET, TEXT("127.0.0.1:3306"), &client_addr.sin_addr);
-
-		while (1)
-		{
-			if (!connect(client_sock, (SOCKADDR*)&client_addr, sizeof(client_addr)))	// connect는 정상 연결되면 0을 반환
-			{
-				cout << "Server Connect" << endl;
-				send(client_sock, my_nick.c_str(), my_nick.length(), 0);
-				break;
-			}
-			cout << "connecting..." << endl;
-		}
-
-		std::thread th2(chat_recv);
-
-		while (1)
-		{
-			string text;
-			std::getline(cin, text);
-			const char* buffer = text.c_str();
-			send(client_sock, buffer, strlen(buffer), 0);
-		}
-
-		th2.join();
-		closesocket(client_sock);
+		send(sck_list[i].sck, msg, MAX_SIZE, 0);
 	}
+}
 
-	WSACleanup();
-	return 0;
+void recv_msg(int idx)
+{
+	char buf[MAX_SIZE] = {};
+	string msg = "";
+
+	while (1)
+	{
+		ZeroMemory(&buf, MAX_SIZE);
+		if (recv(sck_list[idx].sck, buf, MAX_SIZE, 0) > 0)
+		{
+			sql::Driver* driver; // 추후 해제하지 않아도 Connector/C++가 자동으로 해제해 줌
+			sql::Connection* con;
+			sql::Statement* stmt; // 추가!!
+			sql::PreparedStatement* pstmt;
+			sql::ResultSet* result;
+
+			try
+			{
+				driver = get_driver_instance();
+				con = driver->connect(server, username, password1);
+			}
+			catch (sql::SQLException e)
+			{
+				cout << "Could not connect to server. Error message: " << e.what() << endl;
+				system("pause");
+				exit(1);
+			}
+
+			con->setSchema("ceemychat");	// ceemychat이라는 스키마 실행
+			stmt = con->createStatement(); // 추가!!
+			stmt->execute("set names euckr"); // 추가!!
+			if (stmt) { delete stmt; stmt = nullptr; } // 추가!!
+			delete stmt;
+
+			pstmt = con->prepareStatement("INSERT INTO message(sender_id, receiver_id, text) VALUES(?,?,?)");
+
+			// 만약 정상적으로 받았다면
+			msg = sck_list[idx].user + " : " + buf;
+			cout << msg << endl;
+			send_msg(msg.c_str());
+
+			pstmt->setString(1, sck_list[idx].user); // sender_id
+			pstmt->setString(2, ""); // receiver_id
+			pstmt->setString(3, buf); // text
+			pstmt->execute();
+
+			delete pstmt;
+		}
+		else
+		{
+			msg = "[공지]" + sck_list[idx].user + "님이 퇴장했습니다.";
+			cout << msg << endl;
+			send_msg(msg.c_str());
+
+			del_client(idx);
+			return;
+		}
+	}
+}
+
+void del_client(int idx)
+{
+	closesocket(sck_list[idx].sck);
+	client_count--;
 }
